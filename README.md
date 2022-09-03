@@ -1,7 +1,7 @@
-# vscode-lizard README
+# VS Code Lizard
 
-This is the README for your extension "vscode-lizard". After writing up a brief
-description, we recommend including the following sections.
+Run complexity analysis on your code using
+[lizard](https://github.com/terryyin/lizard).
 
 ## Features
 
