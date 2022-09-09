@@ -2,7 +2,7 @@
   "name": "vscode-lizard",
   "displayName": "VS Code Lizard",
   "description": "Run complexity analysis on your code.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "publisher": "brobeson",
   "author": {
     "name": "brobeson",
