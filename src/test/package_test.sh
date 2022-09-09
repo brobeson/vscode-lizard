@@ -9,6 +9,7 @@ expected_files="[Content_Types].xml
 extension/CHANGELOG.md
 extension/LICENSE.txt
 extension/out/extension.js
+extension/out/lizard.js
 extension/package.json
 extension/README.md
 extension.vsixmanifest"

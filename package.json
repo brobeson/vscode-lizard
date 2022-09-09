@@ -29,7 +29,7 @@
     "ccn"
   ],
   "activationEvents": [
-    "onCommand:vscode-lizard.helloWorld"
+    "onLanguage:cpp"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -38,10 +38,47 @@
   "contributes": {
     "commands": [
       {
-        "command": "vscode-lizard.helloWorld",
-        "title": "Hello World"
+        "command": "lizard.scanActiveFile",
+        "title": "Scan the Current File",
+        "category": "Lizard"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "lizard",
+      "properties": {
+        "lizard.ccn": {
+          "type": "number",
+          "default": 0,
+          "description": "The maximum cyclomatic complexity value for a function. Set this to 0 to disable scanning CCN.",
+          "minimum": 0
+        },
+        "lizard.functionLength": {
+          "type": "number",
+          "default": 0,
+          "description": "The maximum length of a function. Set this to 0 to disable scanning function length.",
+          "minimum": 0
+        },
+        "lizard.argumentCount": {
+          "type": "number",
+          "default": 0,
+          "description": "The maximum number of arguments for a function. Set this to 0 to disable scanning function arguments",
+          "minimum": 0
+        },
+        "lizard.useModifiedCcn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use modified CCN complexity analysis. This treats switch statements as having CCN 1 regardless of the number of cases."
+        },
+        "lizard.whitelist": {
+          "type": "string",
+          "description": "The path to a white list file. If this is not set, the Lizard default is used."
+        },
+        "lizard.extensions": {
+          "type": "array",
+          "description": "A list of Lizard extensions to include on the command line. See the Lizard documentation for information about available extensions."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -54,7 +91,7 @@
   "devDependencies": {
     "@types/glob": "^7.2.0",
     "@types/mocha": "^9.1.1",
-    "@types/node": "16.x",
+    "@types/node": "^16.x",
     "@types/vscode": "^1.70.0",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
