@@ -24,26 +24,13 @@ system.
 
 ## Extension Settings
 
-- `lizard.ccn`: The maximum modified cyclomatic complexity of a function. Set
-  this 0 to disable scanning CCN. The default value is 0.
-- `lizard.parameters`: The maximum number of parameters for a function. Set this
-  to 0 to disable scanning function parameters. The default value is 0.
-- `lizard.length`: The maximum length of a function. Set this to 0 to disable
-  scanning function length. The default value is 0.
-- `lizard.modified_ccn`: Use modified CCN analysis. This treats switch
-  statements as complexity 1 regardless of the number of cases. The default is
-  off.
-- `lizard.whitelist`: The path to a whitelist file. The path is relative to the
-  workspace. See the Lizard documentation for details.
-- `lizard.extensions`: A list of Lizard extensions to run as part of the Lizard
-  command. See the Lizard documentation for details.
+See the [user manual](https://brobeson.github.io/vscode-lizard/) for information
+about the extension's settings.
 
 ## Commands
 
-- `Lizard: Scan the Current Document`: Use this command manually scan the
-  current file with Lizard. Note that VS Code Lizard scans a file automatically
-  when you save it, and when you update the settings. This command is most
-  useful when you make an external change, such as editing the whitelist file.
+See the [user manual](https://brobeson.github.io/vscode-lizard/) for information
+about available commands.
 
 ## Known Issues
 

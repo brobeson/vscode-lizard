@@ -9,6 +9,7 @@
     "url": "https://brobeson.github.io"
   },
   "homepage": "https://brobeson.github.io/vscode-lizard",
+  "icon": "logo.png",
   "bugs": {
     "url": "https://github.com/brobeson/vscode-lizard/issues"
   },
@@ -48,20 +49,17 @@
       "properties": {
         "lizard.ccn": {
           "type": "number",
-          "default": 0,
-          "description": "The maximum cyclomatic complexity value for a function. Set this to 0 to disable scanning CCN.",
-          "minimum": 0
+          "description": "The maximum cyclomatic complexity value for a function.",
+          "minimum": 1
         },
         "lizard.functionLength": {
           "type": "number",
-          "default": 0,
-          "description": "The maximum length of a function. Set this to 0 to disable scanning function length.",
-          "minimum": 0
+          "description": "The maximum length of a function.",
+          "minimum": 1
         },
         "lizard.parameterCount": {
           "type": "number",
-          "default": 0,
-          "description": "The maximum number of parameters for a function. Set this to 0 to disable scanning function parameters",
+          "description": "The maximum number of parameters a function can have.",
           "minimum": 0
         },
         "lizard.useModifiedCcn": {
@@ -71,7 +69,7 @@
         },
         "lizard.whitelist": {
           "type": "string",
-          "description": "The path to a white list file. If this is not set, the Lizard default is used."
+          "description": "The path to a white list file."
         },
         "lizard.extensions": {
           "type": "array",
