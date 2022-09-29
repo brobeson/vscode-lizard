@@ -26,8 +26,8 @@ system.
 
 - `lizard.ccn`: The maximum modified cyclomatic complexity of a function. Set
   this 0 to disable scanning CCN. The default value is 0.
-- `lizard.arguments`: The maximum number of arguments for a function. Set this
-  to 0 to disable scanning function arguments. The default value is 0.
+- `lizard.parameters`: The maximum number of parameters for a function. Set this
+  to 0 to disable scanning function parameters. The default value is 0.
 - `lizard.length`: The maximum length of a function. Set this to 0 to disable
   scanning function length. The default value is 0.
 - `lizard.modified_ccn`: Use modified CCN analysis. This treats switch

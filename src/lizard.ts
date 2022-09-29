@@ -1,64 +1,121 @@
 import { spawn } from "child_process";
 import * as vscode from "vscode";
 
-export class Configuration {
+export function activate(context: vscode.ExtensionContext) {
+  let subscriptions = context.subscriptions;
+  let diagnostics = vscode.languages.createDiagnosticCollection("Lizard");
+  subscriptions.push(diagnostics);
+  let log = vscode.window.createOutputChannel("Lizard");
+  subscriptions.push(log);
+
+  // async function lizardDocument(file: vscode.TextDocument) {
+  //   if (vscode.workspace.workspaceFolders === undefined) {
+  //     return;
+  //   }
+  //   const diag = await lintDocument(
+  //     file,
+  //     vscode.workspace.workspaceFolders[0].uri.fsPath,
+  //     limits,
+  //     log
+  //   );
+  //   diagnostics.set(file.uri, diag);
+  // }
+
+  async function lizardActiveDocument() {
+    if (
+      vscode.window.activeTextEditor !== undefined &&
+      vscode.workspace.workspaceFolders !== undefined
+    ) {
+      diagnostics.set(
+        vscode.window.activeTextEditor.document.uri,
+        await lintDocument(
+          vscode.window.activeTextEditor.document,
+          vscode.workspace.workspaceFolders[0].uri.fsPath,
+          log
+        )
+      );
+    }
+  }
+
+  // List of events that can't be used:
+  // - onDidChangeTextDocument: Lizard reads the file from disk; it must be saved
+  //    first.
+  // TODO After implementing whole-project scanning, try to add an event to
+  // rescan after the whitelist file is saved.
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "lizard.scanActiveFile",
+      lizardActiveDocument
+    )
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(lizardActiveDocument)
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument(lizardActiveDocument)
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument((doc) =>
+      diagnostics.delete(doc.uri)
+    )
+  );
+  // context.subscriptions.push(
+  //   vscode.workspace.onDidChangeConfiguration((config) => {
+  //     if (config.affectsConfiguration("lizard")) {
+  //       limits = readLimits();
+  //       vscode.workspace.textDocuments.forEach(lizardDocument);
+  //     }
+  //   })
+  // );
+}
+
+export function deactivate() {}
+
+export type Configuration = {
+  readonly ccn?: number;
+  readonly length?: number;
+  readonly parameters?: number;
+  readonly modified?: boolean;
+  readonly whitelist?: string;
+  readonly extensions?: string[];
+};
+
+export type Details = {
+  readonly fullFunctionName: string; // Function name with namespaces.
+  readonly functionName: string; // Function name without namespaces.
+  readonly lineNumber: number;
   readonly ccn: number;
   readonly length: number;
-  readonly arguments: number;
-  readonly modified: boolean;
-  readonly whitelist: string;
-  readonly extensions: string[];
-  constructor(
-    ccn: number,
-    length: number,
-    parameters: number,
-    modified: boolean,
-    whitelist: string,
-    extensions: string[]
-  ) {
-    this.ccn = ccn;
-    this.length = length;
-    this.arguments = parameters;
-    this.modified = modified;
-    this.whitelist = whitelist;
-    this.extensions = extensions;
-  }
-}
+  readonly parameters: number;
+};
 
-export async function lintActiveDocument(
-  workingDirectory: string,
-  limits: Configuration,
-  log: vscode.OutputChannel
-) {
-  if (vscode.window.activeTextEditor === undefined) {
-    return { document: undefined, diagnostics: [] };
-  }
-  return {
-    document: vscode.window.activeTextEditor.document,
-    diagnostics: await lintDocument(
-      vscode.window.activeTextEditor.document,
-      workingDirectory,
-      limits,
-      log
-    ),
-  };
-}
-
-export async function lintDocument(
+async function lintDocument(
   file: vscode.TextDocument,
   workingDirectory: string,
-  limits: Configuration,
   log: vscode.OutputChannel
 ) {
   // TODO Expand this list to include all the languages supported by Lizard.
   if (!["cpp"].includes(file.languageId) || file.uri.scheme !== "file") {
     return [];
   }
+  const limits = readLimits();
   return createDiagnosticsForAllOutput(
     await runLizard(file.uri.fsPath, workingDirectory, limits, log),
     limits,
     file
   );
+}
+
+function readLimits(): Configuration {
+  const configuration = vscode.workspace.getConfiguration("lizard");
+  return {
+    ccn: configuration.get("ccn"),
+    length: configuration.get("functionLength"),
+    parameters: configuration.get("parameterCount"),
+    modified: configuration.get("useModifiedCcn"),
+    whitelist: configuration.get("whitelist"),
+    extensions: configuration.get("extensions"),
+  };
 }
 
 function runLizard(
@@ -67,75 +124,55 @@ function runLizard(
   limits: Configuration,
   log: vscode.OutputChannel
 ): Promise<string> {
+  const commandArguments = getLizardCommandArguments(limits, file);
+  log.appendLine(`> lizard ${commandArguments.join(" ")}`);
   return new Promise((resolve, reject) => {
-    const args = makeLizardCommand(limits, file);
-    const lizard = "lizard";
-    log.appendLine(`> ${lizard} ${args.join(" ")}`);
-    log.show();
-
-    const process = spawn(lizard, args, {
+    const process = spawn("lizard", commandArguments, {
       cwd: workingDirectory,
     });
     if (process.pid) {
-      let stdout = "";
-      let stderr = "";
-      process.stdout.on("data", (data) => {
-        stdout += data;
+      let output = "";
+      process.stdout.on("data", (data) => { output += data; }); // prettier-ignore
+      process.stderr.on("data", (data) => { output += data; }); // prettier-ignore
+      process.on("close", (code) => {
+        log.append(output);
+        resolve(output.trim());
       });
-      process.stdout.on("end", () => {
-        log.appendLine(stdout);
-        resolve(stdout);
-      });
-      process.stderr.on("data", (data) => {
-        stderr += data;
-      });
-      process.stderr.on("end", () => {
-        if (stderr.length > 0) {
-          const exceptionMessage = extractExceptionMessage(stderr);
-          vscode.window.showErrorMessage(
-            `Lizard failed; here's the exception message:\n${exceptionMessage}`
-          );
-        }
-      });
-      process.on("error", (err) => {
-        log.appendLine(err.message);
-        reject(err);
-      });
+      process.on("error", (err) => reject(err));
     } else {
       log.appendLine("Failed to run Lizard.");
     }
   });
 }
 
-function extractExceptionMessage(processOutput: string): string {
-  const lines = processOutput.trim().split("\n");
-  return lines[lines.length - 1];
-}
-
-function makeLizardCommand(limits: Configuration, file: string | undefined) {
-  let args: string[] = ["--warnings_only"];
+function getLizardCommandArguments(limits: Configuration, file?: string) {
+  let commandArguments: string[] = ["--warnings_only"];
   if (limits.modified) {
-    args.push("--modified");
+    commandArguments.push("--modified");
   }
-  if (limits.ccn !== 0) {
-    args.push(`--CCN=${limits.ccn}`);
+  if (limits.ccn) {
+    commandArguments.push(`--CCN=${limits.ccn}`);
   }
-  if (limits.length !== 0) {
-    args.push(`--length=${limits.length}`);
+  if (limits.length) {
+    commandArguments.push(`--length=${limits.length}`);
   }
-  if (limits.arguments !== 0) {
-    args.push(`--arguments=${limits.arguments}`);
+  if (limits.parameters) {
+    commandArguments.push(`--arguments=${limits.parameters}`);
   }
-  if (limits.whitelist !== "") {
-    args.push(`--whitelist=${limits.whitelist}`);
+  if (limits.whitelist && limits.whitelist !== "") {
+    commandArguments.push(`--whitelist=${limits.whitelist}`);
   }
-  for (const extension of limits.extensions) {
-    args.push(`--extension=${extension}`);
+  if (limits.extensions) {
+    for (const extension of limits.extensions) {
+      if (extension !== "") {
+        commandArguments.push(`--extension=${extension}`);
+      }
+    }
   }
-  if (file !== undefined) {
-    args.push(file);
+  if (file) {
+    commandArguments.push(file);
   }
-  return args;
+  return commandArguments;
 }
 
 function createDiagnosticsForAllOutput(
@@ -143,49 +180,52 @@ function createDiagnosticsForAllOutput(
   limits: Configuration,
   file: vscode.TextDocument
 ): vscode.Diagnostic[] {
-  const lines = processOutput.trim().split("\n");
   let diagnostics: vscode.Diagnostic[] = [];
-  for (const line of lines) {
-    if (line.startsWith("WARNING")) {
-      if (!line.endsWith("!!!!!")) {
-        const warning = line.replace("WARNING: ", "");
-        vscode.window.showWarningMessage(
-          warning.charAt(0).toUpperCase() + warning.slice(1)
-        );
-      }
-    } else {
-      diagnostics = diagnostics.concat(
-        createDiagnosticsForOneLine(extractDetails(line), limits, file)
-      );
-    }
-  }
-  for (let diagnostic of diagnostics) {
-    diagnostic.source = "Lizard";
-  }
+  processOutput
+    .trim()
+    .split("\n")
+    .forEach(
+      (line) =>
+        (diagnostics = diagnostics.concat(processLine(line, limits, file)))
+    );
   return diagnostics;
 }
 
-class Details {
-  readonly fullFunctionName: string; // Function name with namespaces.
-  readonly functionName: string; // Function name without namespaces.
-  readonly lineNumber: number;
-  readonly ccn: number;
-  readonly length: number;
-  readonly arguments: number;
-  constructor(
-    fullFunctionName: string,
-    lineNumber: number,
-    ccn: number,
-    length: number,
-    parameters: number
-  ) {
-    this.fullFunctionName = fullFunctionName;
-    this.functionName = extractFunctionName(fullFunctionName);
-    this.lineNumber = lineNumber;
-    this.ccn = ccn;
-    this.length = length;
-    this.arguments = parameters;
+function processLine(
+  line: string,
+  limits: Configuration,
+  file: vscode.TextDocument
+): vscode.Diagnostic[] {
+  if (line.startsWith("WARNING") && !line.endsWith("!!!!!")) {
+    const warning = line.replace("WARNING: ", "");
+    vscode.window.showWarningMessage(
+      warning.charAt(0).toUpperCase() + warning.slice(1)
+    );
+    return [];
   }
+  return createDiagnosticsForOneLine(extractDetails(line), limits, file);
+}
+
+function extractDetails(line: string): Details | null {
+  const matches = line.match(
+    /(^[^:]+):(\d+):[^:]+: (.+) has \d+ NLOC, (\d+) CCN, \d+ token, (\d+) PARAM, (\d+) length/
+  );
+  if (matches && matches.length >= 7) {
+    return {
+      // For C++ overloaded operators, Lizard inserts spaces into the function
+      // name. For example, 'operator[]' becomes 'operator [ ]'. That messes up
+      // function name searching later, so remove any spaces in the function
+      // name.
+      fullFunctionName: matches[3].replaceAll(" ", ""),
+      functionName: extractFunctionName(matches[3].replaceAll(" ", "")),
+      lineNumber: parseInt(matches[2]) - 1,
+      ccn: parseInt(matches[4]),
+      length: parseInt(matches[6]),
+      parameters: parseInt(matches[5]),
+    };
+  }
+  vscode.window.showWarningMessage(`Failed to parse '${line}`);
+  return null;
 }
 
 function extractFunctionName(fullFunctionName: string): string {
@@ -196,25 +236,31 @@ function extractFunctionName(fullFunctionName: string): string {
   if (index === undefined) {
     return fullFunctionName;
   }
-  return fullFunctionName.substr(index + 1);
+  return fullFunctionName.substring(index + 1);
 }
 
 function createDiagnosticsForOneLine(
-  details: Details,
+  details: Details | null,
   limits: Configuration,
   file: vscode.TextDocument
 ): vscode.Diagnostic[] {
-  let diagnostics: vscode.Diagnostic[] = [];
-  if (limits.ccn > 0 && details.ccn > limits.ccn) {
-    diagnostics.push(createCcnDiagnostic(details, file, limits.ccn));
-  }
-  if (limits.length > 0 && details.length > limits.length) {
-    diagnostics.push(createLengthDiagnostic(details, file, limits.length));
-  }
-  if (limits.arguments > 0 && details.arguments > limits.arguments) {
-    diagnostics.push(
-      createParametersDiagnostic(details, file, limits.arguments)
-    );
+  const diagnostics: vscode.Diagnostic[] = [];
+  if (details) {
+    if (limits.ccn && limits.ccn > 0 && details.ccn > limits.ccn) {
+      diagnostics.push(createCcnDiagnostic(details, file, limits.ccn));
+    }
+    if (limits.length && limits.length > 0 && details.length > limits.length) {
+      diagnostics.push(createLengthDiagnostic(details, file, limits.length));
+    }
+    if (
+      limits.parameters &&
+      limits.parameters > 0 &&
+      details.parameters > limits.parameters
+    ) {
+      diagnostics.push(
+        createParametersDiagnostic(details, file, limits.parameters)
+      );
+    }
   }
   return diagnostics;
 }
@@ -224,15 +270,11 @@ function createCcnDiagnostic(
   file: vscode.TextDocument,
   limit: number
 ) {
-  let d = new vscode.Diagnostic(
-    details.functionName === "*global*"
-      ? new vscode.Range(0, 0, file.lineCount, 0)
-      : getFunctionRange(details, file),
+  const d = createDiagnostic(details, file);
+  d.message =
     details.functionName === "*global*"
       ? `The global scope has ${details.ccn} CCN; the maximum is ${limit}.`
-      : `${details.functionName} has ${details.ccn} CCN; the maximum is ${limit}.`,
-    vscode.DiagnosticSeverity.Warning
-  );
+      : `${details.functionName} has ${details.ccn} CCN; the maximum is ${limit}.`;
   d.code = "CCN";
   return d;
 }
@@ -242,15 +284,11 @@ function createLengthDiagnostic(
   file: vscode.TextDocument,
   limit: number
 ) {
-  let d = new vscode.Diagnostic(
+  const d = createDiagnostic(details, file);
+  d.message =
     details.functionName === "*global*"
-      ? new vscode.Range(0, 0, file.lineCount, 0)
-      : getFunctionRange(details, file),
-    details.functionName === "*global*"
-      ? `The global scope has ${details.length} length; the maximum is ${limit}.`
-      : `${details.functionName} has ${details.length} length; the maximum is ${limit}.`,
-    vscode.DiagnosticSeverity.Warning
-  );
+      ? `The global scope has ${details.length} lines; the maximum is ${limit}.`
+      : `${details.functionName} has ${details.length} lines; the maximum is ${limit}.`;
   d.code = "Function Length";
   return d;
 }
@@ -260,27 +298,25 @@ function createParametersDiagnostic(
   file: vscode.TextDocument,
   limit: number
 ) {
+  const d = createDiagnostic(details, file);
+  d.message =
+    details.functionName === "*global*"
+      ? `The global scope has ${details.parameters} parameters; the maximum is ${limit}.`
+      : `${details.functionName} has ${details.parameters} parameters; the maximum is ${limit}.`;
+  d.code = "Parameter Count";
+  return d;
+}
+
+function createDiagnostic(details: Details, file: vscode.TextDocument) {
   let d = new vscode.Diagnostic(
     details.functionName === "*global*"
       ? new vscode.Range(0, 0, file.lineCount, 0)
       : getFunctionRange(details, file),
-    details.functionName === "*global*"
-      ? `The global scope has ${details.arguments} parameters; the maximum is ${limit}.`
-      : `${details.functionName} has ${details.arguments} parameters; the maximum is ${limit}.`,
+    "dummy message",
     vscode.DiagnosticSeverity.Warning
   );
-  d.code = "Argument Count";
+  d.source = "Lizard";
   return d;
-}
-
-function extractDetails(line: string): Details {
-  return new Details(
-    line.split(" ")[2],
-    parseInt(line.split(":")[1]) - 1,
-    extractValues(line, /[0-9]+ CCN/),
-    extractValues(line, /[0-9]+ length/),
-    extractValues(line, /[0-9]+ PARAM/)
-  );
 }
 
 function getFunctionRange(
@@ -289,23 +325,23 @@ function getFunctionRange(
 ): vscode.Range {
   const lineText = file.lineAt(details.lineNumber).text;
   const startCharacter = lineText.lastIndexOf(details.functionName);
-  if (startCharacter >= lineText.length) {
-    return new vscode.Range(details.lineNumber, 0, details.lineNumber, 0);
+  if (startCharacter >= 0) {
+    const range = file.getWordRangeAtPosition(
+      new vscode.Position(details.lineNumber, Math.max(startCharacter, 0)),
+      // C++ allows operator[] overloading. If that is the offending function,
+      // make the [] characters regex literals instead of a character range.
+      RegExp(details.functionName.replaceAll("[", "\\[").replaceAll("]", "\\]"))
+    );
+    if (range) {
+      return range;
+    }
   }
-  const range = file.getWordRangeAtPosition(
-    new vscode.Position(details.lineNumber, startCharacter),
-    RegExp(details.functionName)
+  // Default case - highlight from the first non-space character to the end of
+  // the line.
+  return new vscode.Range(
+    details.lineNumber,
+    lineText.indexOf(lineText.trimStart()),
+    details.lineNumber,
+    lineText.length
   );
-  if (range === undefined) {
-    return new vscode.Range(details.lineNumber, 0, details.lineNumber, 0);
-  }
-  return range;
-}
-
-function extractValues(text: string, parameterRegex: RegExp) {
-  let matches = text.match(parameterRegex);
-  if (matches === null) {
-    return 0;
-  }
-  return parseInt(matches[0].split(" ")[0]);
 }
