@@ -10,6 +10,8 @@ This file documents all notable changes to the VS Code Lizard extension.
 
 - [#8](https://github.com/brobeson/vscode-lizard/issues/8): VS Code tried to
   parse empty output when Lizard did not find complexity errors in a file.
+- [#9](https://github.com/brobeson/vscode-lizard/issues/9): I updated the list
+  of expected files in the package test.
 
 ## [1.0.0] — 2022-09-28
 

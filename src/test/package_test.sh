@@ -6,8 +6,10 @@ vsix_file=$(ls *.vsix)
 actual_files=$(unzip -lqq ${vsix_file} | sed 's/^.*   //' | sort --dictionary-order --ignore-case)
 
 expected_files="[Content_Types].xml
+extension/Attribution.txt
 extension/CHANGELOG.md
 extension/LICENSE.txt
+extension/logo.png
 extension/out/lizard.js
 extension/package.json
 extension/README.md
