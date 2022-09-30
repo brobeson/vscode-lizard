@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
   // - onDidChangeTextDocument: Lizard reads the file from disk; it must be saved
   //    first.
   // TODO After implementing whole-project scanning, try to add an event to
-  // rescan after the whitelist file is saved.
+  // re-scan after the whitelist file is saved.
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "lizard.scanActiveFile",
@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {}
 
-export type Configuration = {
+type Configuration = {
   readonly ccn?: number;
   readonly length?: number;
   readonly parameters?: number;
@@ -80,13 +80,18 @@ export type Configuration = {
   readonly extensions?: string[];
 };
 
-export type Details = {
+type Details = {
   readonly fullFunctionName: string; // Function name with namespaces.
   readonly functionName: string; // Function name without namespaces.
   readonly lineNumber: number;
   readonly ccn: number;
   readonly length: number;
   readonly parameters: number;
+};
+
+type CommandResponse = {
+  exitCode: number;
+  output: string;
 };
 
 async function lintDocument(
@@ -99,11 +104,16 @@ async function lintDocument(
     return [];
   }
   const limits = readLimits();
-  return createDiagnosticsForAllOutput(
-    await runLizard(file.uri.fsPath, workingDirectory, limits, log),
+  const response = await runLizard(
+    file.uri.fsPath,
+    workingDirectory,
     limits,
-    file
+    log
   );
+  if (response.exitCode > 0 && response.output) {
+    return createDiagnosticsForAllOutput(response.output, limits, file);
+  }
+  return [];
 }
 
 function readLimits(): Configuration {
@@ -123,7 +133,7 @@ function runLizard(
   workingDirectory: string,
   limits: Configuration,
   log: vscode.OutputChannel
-): Promise<string> {
+): Promise<CommandResponse> {
   const commandArguments = getLizardCommandArguments(limits, file);
   log.appendLine(`> lizard ${commandArguments.join(" ")}`);
   return new Promise((resolve, reject) => {
@@ -134,9 +144,11 @@ function runLizard(
       let output = "";
       process.stdout.on("data", (data) => { output += data; }); // prettier-ignore
       process.stderr.on("data", (data) => { output += data; }); // prettier-ignore
-      process.on("close", (code) => {
+      process.on("close", (exitCode) => {
         log.append(output);
-        resolve(output.trim());
+        exitCode = exitCode ?? 0;
+        output = output.trim();
+        resolve({ exitCode, output });
       });
       process.on("error", (err) => reject(err));
     } else {

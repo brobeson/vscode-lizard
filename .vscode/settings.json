@@ -9,5 +9,8 @@
   // scripts
   "typescript.tsc.autoDetect": "off",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" }
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.words": ["NLOC"]
 }
