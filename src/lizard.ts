@@ -100,7 +100,7 @@ async function lintDocument(
   log: vscode.OutputChannel
 ) {
   // TODO Expand this list to include all the languages supported by Lizard.
-  if (!["cpp"].includes(file.languageId) || file.uri.scheme !== "file") {
+  if (!["cpp", "typescript", "javascript"].includes(file.languageId) || file.uri.scheme !== "file") {
     return [];
   }
   const limits = readLimits();

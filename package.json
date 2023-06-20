@@ -2,7 +2,7 @@
   "name": "vscode-lizard",
   "displayName": "VS Code Lizard",
   "description": "Run complexity analysis on your code.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "brobeson",
   "author": {
     "name": "brobeson",
@@ -30,7 +30,9 @@
     "ccn"
   ],
   "activationEvents": [
-    "onLanguage:cpp"
+    "onLanguage:cpp",
+    "onLanguage:typescript",
+    "onLanguage:javascript"
   ],
   "main": "./out/lizard.js",
   "extensionKind": [
