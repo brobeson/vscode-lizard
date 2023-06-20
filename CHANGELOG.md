@@ -4,6 +4,11 @@
 
 This file documents all notable changes to the VS Code Lizard extension.
 
+## [1.0.2] — 2022-09-29
+
+- [#2](https://github.com/brobeson/vscode-lizard/issues/2) Adds Typescript,
+  javascript support
+
 ## [1.0.1] — 2022-09-29
 
 ### Fixed
