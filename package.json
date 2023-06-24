@@ -74,6 +74,10 @@
         "lizard.extensions": {
           "type": "array",
           "description": "A list of Lizard extensions to include on the command line. See the Lizard documentation for information about available extensions."
+        },
+        "lizard.excludes": {
+          "type": "array",
+          "description": "A list of regular expressions describing paths to exclude from Lizard scans."
         }
       }
     }
@@ -89,6 +93,7 @@
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
+    "@types/glob-to-regexp": "^0.4.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^16.x",
     "@types/vscode": "^1.70.0",
@@ -103,5 +108,8 @@
   },
   "prettier": {
     "proseWrap": "always"
+  },
+  "dependencies": {
+    "glob-to-regexp": "^0.4.1"
   }
 }

@@ -4,6 +4,13 @@
 
 This file documents all notable changes to the VS Code Lizard extension.
 
+## [Unreleased]
+
+### Added
+
+- [#3](https://github.com/brobeson/vscode-lizard/issues/3): Users can exclude
+  files from scanning by setting the `lizard.excludes` option.
+
 ## [1.0.1] — 2022-09-29
 
 ### Fixed

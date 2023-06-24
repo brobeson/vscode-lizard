@@ -27,6 +27,7 @@
   workspace. See the Lizard documentation for details.
 - `lizard.extensions`: A list of Lizard extensions to run as part of the Lizard
   command. See the Lizard documentation for details.
+- `lizard.excludes`: A list of regular expressions describing files to not scan.
 
 ## Running Complexity Analysis
 
@@ -35,6 +36,8 @@ manually run Lizard, you can use the command `Lizard: Scan the Current File` in
 the VS Code command palette. VS Code Lizard populates the Problems view with any
 results. It also attempts to highlight offending functions in the code with
 error squiggles.
+
+### Excluding Files
 
 ## Viewing Output
 

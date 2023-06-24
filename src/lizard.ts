@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import * as vscode from "vscode";
+import * as globToRegex from "glob-to-regexp";
 
 export function activate(context: vscode.ExtensionContext) {
   let subscriptions = context.subscriptions;
@@ -78,6 +79,8 @@ type Configuration = {
   readonly modified?: boolean;
   readonly whitelist?: string;
   readonly extensions?: string[];
+  readonly excludeGlobs?: string[];
+  excludeRegExs?: RegExp[];
 };
 
 type Details = {
@@ -104,6 +107,9 @@ async function lintDocument(
     return [];
   }
   const limits = readLimits();
+  if (shouldSkipFile(file.uri.fsPath, limits.excludeRegExs)) {
+    return [];
+  }
   const response = await runLizard(
     file.uri.fsPath,
     workingDirectory,
@@ -113,19 +119,42 @@ async function lintDocument(
   if (response.exitCode > 0 && response.output) {
     return createDiagnosticsForAllOutput(response.output, limits, file);
   }
-  return [];
+}
+
+function shouldSkipFile(filepath: string, excludePatterns?: RegExp[]): boolean {
+  if (excludePatterns === undefined) {
+    return false;
+  }
+  const s = excludePatterns.some((regex) => {
+    regex.test(filepath);
+  });
+  return s;
+  // return (
+  //   excludePatterns === undefined ||
+  //   excludePatterns.some((regex) => {
+  //     regex.test(filepath);
+  //   })
+  // );
 }
 
 function readLimits(): Configuration {
   const configuration = vscode.workspace.getConfiguration("lizard");
-  return {
+  const config: Configuration = {
     ccn: configuration.get("ccn"),
     length: configuration.get("functionLength"),
     parameters: configuration.get("parameterCount"),
     modified: configuration.get("useModifiedCcn"),
     whitelist: configuration.get("whitelist"),
     extensions: configuration.get("extensions"),
+    excludeGlobs: configuration.get("excludes"),
   };
+  if (config.excludeGlobs) {
+    config.excludeRegExs = [];
+    config.excludeGlobs.forEach((excludeGlob) => {
+      config.excludeRegExs?.push(globToRegex(excludeGlob));
+    });
+  }
+  return config;
 }
 
 function runLizard(
