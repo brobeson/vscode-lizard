@@ -31,8 +31,8 @@ export function activate(context: vscode.ExtensionContext) {
         await lintDocument(
           vscode.window.activeTextEditor.document,
           vscode.workspace.workspaceFolders[0].uri.fsPath,
-          log
-        )
+          log,
+        ),
       );
     }
   }
@@ -45,19 +45,19 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "lizard.scanActiveFile",
-      lizardActiveDocument
-    )
+      lizardActiveDocument,
+    ),
   );
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(lizardActiveDocument)
+    vscode.workspace.onDidOpenTextDocument(lizardActiveDocument),
   );
   context.subscriptions.push(
-    vscode.workspace.onDidSaveTextDocument(lizardActiveDocument)
+    vscode.workspace.onDidSaveTextDocument(lizardActiveDocument),
   );
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((doc) =>
-      diagnostics.delete(doc.uri)
-    )
+      diagnostics.delete(doc.uri),
+    ),
   );
   // context.subscriptions.push(
   //   vscode.workspace.onDidChangeConfiguration((config) => {
@@ -97,7 +97,7 @@ type CommandResponse = {
 async function lintDocument(
   file: vscode.TextDocument,
   workingDirectory: string,
-  log: vscode.OutputChannel
+  log: vscode.OutputChannel,
 ) {
   // TODO Expand this list to include all the languages supported by Lizard.
   if (!["cpp"].includes(file.languageId) || file.uri.scheme !== "file") {
@@ -108,7 +108,7 @@ async function lintDocument(
     file.uri.fsPath,
     workingDirectory,
     limits,
-    log
+    log,
   );
   if (response.exitCode > 0 && response.output) {
     return createDiagnosticsForAllOutput(response.output, limits, file);
@@ -132,7 +132,7 @@ function runLizard(
   file: string,
   workingDirectory: string,
   limits: Configuration,
-  log: vscode.OutputChannel
+  log: vscode.OutputChannel,
 ): Promise<CommandResponse> {
   const commandArguments = getLizardCommandArguments(limits, file);
   log.appendLine(`> lizard ${commandArguments.join(" ")}`);
@@ -190,7 +190,7 @@ function getLizardCommandArguments(limits: Configuration, file?: string) {
 function createDiagnosticsForAllOutput(
   processOutput: string,
   limits: Configuration,
-  file: vscode.TextDocument
+  file: vscode.TextDocument,
 ): vscode.Diagnostic[] {
   let diagnostics: vscode.Diagnostic[] = [];
   processOutput
@@ -198,7 +198,7 @@ function createDiagnosticsForAllOutput(
     .split("\n")
     .forEach(
       (line) =>
-        (diagnostics = diagnostics.concat(processLine(line, limits, file)))
+        (diagnostics = diagnostics.concat(processLine(line, limits, file))),
     );
   return diagnostics;
 }
@@ -206,12 +206,12 @@ function createDiagnosticsForAllOutput(
 function processLine(
   line: string,
   limits: Configuration,
-  file: vscode.TextDocument
+  file: vscode.TextDocument,
 ): vscode.Diagnostic[] {
   if (line.startsWith("WARNING") && !line.endsWith("!!!!!")) {
     const warning = line.replace("WARNING: ", "");
     vscode.window.showWarningMessage(
-      warning.charAt(0).toUpperCase() + warning.slice(1)
+      warning.charAt(0).toUpperCase() + warning.slice(1),
     );
     return [];
   }
@@ -220,7 +220,7 @@ function processLine(
 
 function extractDetails(line: string): Details | null {
   const matches = line.match(
-    /(^[^:]+):(\d+):[^:]+: (.+) has \d+ NLOC, (\d+) CCN, \d+ token, (\d+) PARAM, (\d+) length/
+    /(^[^:]+):(\d+):[^:]+: (.+) has \d+ NLOC, (\d+) CCN, \d+ token, (\d+) PARAM, (\d+) length/,
   );
   if (matches && matches.length >= 7) {
     return {
@@ -254,7 +254,7 @@ function extractFunctionName(fullFunctionName: string): string {
 function createDiagnosticsForOneLine(
   details: Details | null,
   limits: Configuration,
-  file: vscode.TextDocument
+  file: vscode.TextDocument,
 ): vscode.Diagnostic[] {
   const diagnostics: vscode.Diagnostic[] = [];
   if (details) {
@@ -270,7 +270,7 @@ function createDiagnosticsForOneLine(
       details.parameters > limits.parameters
     ) {
       diagnostics.push(
-        createParametersDiagnostic(details, file, limits.parameters)
+        createParametersDiagnostic(details, file, limits.parameters),
       );
     }
   }
@@ -280,7 +280,7 @@ function createDiagnosticsForOneLine(
 function createCcnDiagnostic(
   details: Details,
   file: vscode.TextDocument,
-  limit: number
+  limit: number,
 ) {
   const d = createDiagnostic(details, file);
   d.message =
@@ -294,7 +294,7 @@ function createCcnDiagnostic(
 function createLengthDiagnostic(
   details: Details,
   file: vscode.TextDocument,
-  limit: number
+  limit: number,
 ) {
   const d = createDiagnostic(details, file);
   d.message =
@@ -308,7 +308,7 @@ function createLengthDiagnostic(
 function createParametersDiagnostic(
   details: Details,
   file: vscode.TextDocument,
-  limit: number
+  limit: number,
 ) {
   const d = createDiagnostic(details, file);
   d.message =
@@ -325,7 +325,7 @@ function createDiagnostic(details: Details, file: vscode.TextDocument) {
       ? new vscode.Range(0, 0, file.lineCount, 0)
       : getFunctionRange(details, file),
     "dummy message",
-    vscode.DiagnosticSeverity.Warning
+    vscode.DiagnosticSeverity.Warning,
   );
   d.source = "Lizard";
   return d;
@@ -333,7 +333,7 @@ function createDiagnostic(details: Details, file: vscode.TextDocument) {
 
 function getFunctionRange(
   details: Details,
-  file: vscode.TextDocument
+  file: vscode.TextDocument,
 ): vscode.Range {
   const lineText = file.lineAt(details.lineNumber).text;
   const startCharacter = lineText.lastIndexOf(details.functionName);
@@ -342,7 +342,9 @@ function getFunctionRange(
       new vscode.Position(details.lineNumber, Math.max(startCharacter, 0)),
       // C++ allows operator[] overloading. If that is the offending function,
       // make the [] characters regex literals instead of a character range.
-      RegExp(details.functionName.replaceAll("[", "\\[").replaceAll("]", "\\]"))
+      RegExp(
+        details.functionName.replaceAll("[", "\\[").replaceAll("]", "\\]"),
+      ),
     );
     if (range) {
       return range;
@@ -354,6 +356,6 @@ function getFunctionRange(
     details.lineNumber,
     lineText.indexOf(lineText.trimStart()),
     details.lineNumber,
-    lineText.length
+    lineText.length,
   );
 }

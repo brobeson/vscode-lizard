@@ -1,5 +1,6 @@
 # VS Code Lizard
 
+[![Static Analysis](https://github.com/brobeson/vscode-lizard/actions/workflows/static_analysis.yaml/badge.svg)](https://github.com/brobeson/vscode-lizard/actions/workflows/static_analysis.yaml)
 [![Build and Test](https://github.com/brobeson/vscode-lizard/actions/workflows/main.yaml/badge.svg)](https://github.com/brobeson/vscode-lizard/actions/workflows/main.yaml)
 
 This is an extension for Visual Studio Code to run

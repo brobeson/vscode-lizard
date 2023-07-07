@@ -27,7 +27,6 @@ This file documents all notable changes to the VS Code Lizard extension.
 
 - Ability to run Lizard on C++ files
 
-[unreleased]: https://github.com/brobeson/ctest-lab/compare/v1.0.1...HEAD
 [1.0.1]: https://github.com/brobeson/ctest-lab/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/brobeson/vscode-lizard/compare/v0.1.0...v1.0.0
 [0.1.0]:
