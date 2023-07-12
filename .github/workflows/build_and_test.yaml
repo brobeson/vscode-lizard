@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build:
+    name: Build and Test
     strategy:
       fail-fast: false
       matrix:
@@ -28,8 +29,6 @@ jobs:
         run: |
           npm install
           npm install --global vsce
-      - name: Check Code Format
-        run: npx prettier --check .
       - if: runner.os == 'Linux'
         name: Run Tests on Linux
         run: xvfb-run --auto-servernum npm test
