@@ -1,0 +1,15 @@
+{
+  "version": "0.2",
+  "ignorePaths": [".git/"],
+  "words": [
+    "brobeson",
+    "cppcheck",
+    "crey",
+    "davidanson",
+    "dbaeumer",
+    "esbenp",
+    "nofile",
+    "nosborn",
+    "paren"
+  ]
+}
