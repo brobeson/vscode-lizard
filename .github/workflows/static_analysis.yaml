@@ -2,6 +2,7 @@
 
 name: Static Analysis
 on:
+  workflow_dispatch:
   pull_request:
   push:
 
@@ -14,32 +15,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  CodeQuality:
-    name: Static Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v3
-      - name: Check for Markdown lint
-        uses: nosborn/github-action-markdown-cli@v3
-        with:
-          files: .
-          dot: true
-          ignore_files: node_modules
-      - name: Check code formatting
-        uses: creyD/prettier_action@v4.3
-        with:
-          dry: true
-          prettier_options: >
-            --check ./**/*.{md,json,ts,yaml,yml}
-      - name: Check spelling
-        uses: streetsidesoftware/cspell-action@v2
-        with:
-          check_dot_files: true,
-          root: .
-      # Different ESLint actions in the marketplace kept throwing errors, so
-      # just run it from the package.json script.
-      - name: Check for ES lint
-        run: |
-          npm ci
-          npm run lint
+  staticAnalysisDot:
+    name: Support File Code Quality
+    uses: brobeson/brobeson/.github/workflows/static_analysis_support_files.yaml@reusable_workflows
+  staticAnalysisTs:
+    name: TypeScript Code Quality
+    uses: brobeson/brobeson/.github/workflows/static_analysis_support_files.yaml@reusable_workflows
