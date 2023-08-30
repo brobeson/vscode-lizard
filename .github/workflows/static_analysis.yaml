@@ -20,4 +20,4 @@ jobs:
     uses: brobeson/brobeson/.github/workflows/static_analysis_support_files.yaml@reusable_workflows
   staticAnalysisTs:
     name: TypeScript Code Quality
-    uses: brobeson/brobeson/.github/workflows/static_analysis_support_files.yaml@reusable_workflows
+    uses: brobeson/brobeson/.github/workflows/static_analysis_typescript.yaml@reusable_workflows
