@@ -1,43 +1,20 @@
-name: Build and Test
+# Copyright 2023 brobeson
 
+name: Build & Test
 on:
   workflow_dispatch:
-  push:
   pull_request:
+  push:
 
+# From https://stackoverflow.com/a/72408109
+# Create a group from the PR number, or the branch/tag name (if not a PR).
+# Cancel in-progress runs if the PR, branch, or tag is updated.
 concurrency:
   group:
-    "${{github.workflow}} @ ${{github.pull_request.head.label || github.head_ref
-    || github.ref}}"
+    ${{github.workflow}}-${{github.event.pull_request.number || github.ref}}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build and Test
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    runs-on: ${{matrix.os}}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-      - name: Install Packages and Tools
-        run: |
-          npm install
-          npm install --global vsce
-      - if: runner.os == 'Linux'
-        name: Run Tests on Linux
-        run: xvfb-run --auto-servernum npm test
-      - if: runner.os != 'Linux'
-        name: Run Tests on Windows & MacOS
-        run: npm test
-      - if: runner.os == 'Linux'
-        name: Create a VSIX Package
-        run: vsce package
-      - if: runner.os == 'Linux'
-        name: Verify the Package
-        run: ./src/test/package_test.sh
+    name: Build & Test
+    uses: brobeson/brobeson/.github/workflows/build_and_test_typescript.yaml@reusable_workflows
