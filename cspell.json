@@ -3,13 +3,11 @@
   "ignorePaths": [".git/"],
   "words": [
     "brobeson",
-    "cppcheck",
-    "crey",
-    "davidanson",
-    "dbaeumer",
-    "esbenp",
-    "nofile",
-    "nosborn",
-    "paren"
+    "cyclomatic",
+    "mswin",
+    "nloc",
+    "vsix",
+    "vsixmanifest",
+    "zoneinfo"
   ]
 }
