@@ -15,6 +15,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  analysis:
+    name: Static Analysis
+    uses: brobeson/brobeson/.github/workflows/support_files.yaml@reusable_workflows
   build:
     name: Build & Test
-    uses: brobeson/brobeson/.github/workflows/build_and_test_typescript.yaml@reusable_workflows
+    uses: brobeson/brobeson/.github/workflows/typescript.yaml@reusable_workflows
