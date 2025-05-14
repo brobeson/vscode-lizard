@@ -1,4 +1,6 @@
-#!/bin/bash
+#! /usr/bin/env bash
+
+# cspell:ignore vsixmanifest
 
 set -eu
 
@@ -15,8 +17,7 @@ extension/package.json
 extension/README.md
 extension.vsixmanifest"
 
-if [[ "${actual_files}" != "${expected_files}" ]]
-then
+if [[ "${actual_files}" != "${expected_files}" ]]; then
   echo "The actual files in the package do not match the expected files."
   echo "Diff: expected | actual"
   diff -y <(echo "${expected_files}") <(echo "${actual_files}")

@@ -32,6 +32,10 @@ jobs:
         run: |
           npm install
           npm install --global vsce
+      - name: Check for ES lint
+        run: |
+          npm ci
+          npm run lint
       - if: runner.os == 'Linux'
         # cspell:ignore servernum
         name: Run Tests on Linux
