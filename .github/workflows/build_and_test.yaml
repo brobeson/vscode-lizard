@@ -12,6 +12,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dotFiles:
+    name: Dot File Quality
+    uses: brobeson/SupportFileQuality/.github/workflows/support_files.yaml@v1
   build:
     name: Build and Test
     strategy:
