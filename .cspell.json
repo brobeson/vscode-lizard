@@ -1,4 +1,7 @@
 {
   "version": "0.2",
+  "enableGlobDot": true,
+  "useGitignore": true,
+  "ignorePaths": ["extensions.json", "settings.json"],
   "words": ["brobeson", "crey", "cyclomatic", "nloc", "nosborn", "paren"]
 }

@@ -33,6 +33,7 @@ jobs:
           npm install
           npm install --global vsce
       - if: runner.os == 'Linux'
+        # cspell:ignore servernum
         name: Run Tests on Linux
         run: xvfb-run --auto-servernum npm test
       - if: runner.os != 'Linux'
