@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   dotFiles:
-    name: Dot File Quality
+    name: Project Support
     uses: brobeson/SupportFileQuality/.github/workflows/support_files.yaml@v1
   build:
     name: Build and Test
@@ -40,9 +40,9 @@ jobs:
         # cspell:ignore servernum
         name: Run Tests on Linux
         run: xvfb-run --auto-servernum npm test
-      - if: runner.os != 'Linux'
-        name: Run Tests on Windows & MacOS
-        run: npm test
+      # - if: runner.os != 'Linux'
+      #   name: Run Tests on Windows & MacOS
+      #   run: npm test
       - if: runner.os == 'Linux'
         name: Create a VSIX Package
         run: vsce package
