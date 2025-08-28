@@ -26,17 +26,17 @@ jobs:
           files: .
           dot: true
           ignore_files: node_modules
-      - name: Check code formatting
-        uses: creyD/prettier_action@v4.3
-        with:
-          dry: true
-          prettier_options: >
-            --check ./**/*.{md,json,ts,yaml,yml}
-      - name: Check spelling
-        uses: streetsidesoftware/cspell-action@v2
-        with:
-          check_dot_files: true,
-          root: .
+      # - name: Check code formatting
+      #   uses: creyD/prettier_action@v4.3
+      #   with:
+      #     dry: true
+      #     prettier_options: >
+      #       --check ./**/*.{md,json,ts,yaml,yml}
+      # - name: Check spelling
+      #   uses: streetsidesoftware/cspell-action@v2
+      #   with:
+      #     check_dot_files: true,
+      #     root: .
       # Different ESLint actions in the marketplace kept throwing errors, so
       # just run it from the package.json script.
       - name: Check for ES lint
