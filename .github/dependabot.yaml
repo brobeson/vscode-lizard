@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+    groups:
+      npm-security:
+        patterns: "*"
+        applies-to: security-updates
+      npm-versions:
+        patterns: "*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    groups:
+      gha-security:
+        patterns: "*"
+        applies-to: security-updates
+      gha-versions:
+        patterns: "*"
+  # Ruby for local building GH pages
+  - package-ecosystem: bundler
+    directory: /docs/
+    schedule:
+      interval: daily
+    groups:
+      gha-security:
+        patterns: "*"
+        applies-to: security-updates
+      gha-versions:
+        patterns: "*"
