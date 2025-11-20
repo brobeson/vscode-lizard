@@ -19,9 +19,9 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{matrix.os}}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
       - name: Install Packages and Tools
         run: |
           npm install
